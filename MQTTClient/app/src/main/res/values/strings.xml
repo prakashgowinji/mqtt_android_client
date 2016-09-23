@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MQTTClient</string>
+    <string name="layout_behaviour">MQTTClient</string>
+</resources>
