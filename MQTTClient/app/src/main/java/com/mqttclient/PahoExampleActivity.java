@@ -10,6 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
@@ -32,13 +33,15 @@ public class PahoExampleActivity extends AppCompatActivity {
     MqttAndroidClient mqttAndroidClient;
 
     //final String serverUri = "tcp://iot.eclipse.org:1883";
-    final String serverUri = "tcp://broker.mqttdashboard.com:1883";
+    //final String serverUri = "tcp://broker.mqttdashboard.com:1883";
+    final String serverUri = "tcp://10.100.202.12:1883";
 
     //final String clientId = "ExampleAndroidClient";
-    final String clientId = "clientId-d99AUfKH14";
-    final String subscriptionTopic = "testtopic";
-    final String publishTopic = "testtopic";
-    final String publishMessage = "Hello World! From Android";
+    //final String clientId = "clientId-d99AUfKH14";
+    final String clientId = "C_1475133083081";
+    final String subscriptionTopic = "test_topic";
+    final String publishTopic = "test_topic";
+    final String publishMessage = "{\"temp\":141.5151,\"rain\":1.25}";
 
 
     @Override
@@ -55,8 +58,6 @@ public class PahoExampleActivity extends AppCompatActivity {
                 publishMessage();
             }
         });
-
-
 
 
         mRecyclerView = (RecyclerView) findViewById(R.id.history_recycler_view);
@@ -102,11 +103,6 @@ public class PahoExampleActivity extends AppCompatActivity {
         mqttConnectOptions.setCleanSession(false);
 
 
-
-
-
-
-
         try {
             //addToHistory("Connecting to " + serverUri);
             mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
@@ -128,18 +124,17 @@ public class PahoExampleActivity extends AppCompatActivity {
             });
 
 
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             ex.printStackTrace();
         }
 
     }
 
-    private void addToHistory(String mainText){
-        System.out.println("LOG: " + mainText);
+    private void addToHistory(String mainText) {
         mAdapter.add(mainText);
         Snackbar.make(findViewById(android.R.id.content), mainText, Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
-
+        System.out.println("XXX Message: " + new String(mainText));
     }
 
     @Override
@@ -161,7 +156,7 @@ public class PahoExampleActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void subscribeToTopic(){
+    public void subscribeToTopic() {
         try {
             mqttAndroidClient.subscribe(subscriptionTopic, 0, null, new IMqttActionListener() {
                 @Override
@@ -180,25 +175,26 @@ public class PahoExampleActivity extends AppCompatActivity {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     // message Arrived!
-                    System.out.println("Message: " + topic + " : " + new String(message.getPayload()));
+                    System.out.println("XXX Message Arrived: "+ new String(message.getPayload()));
+                    addToHistory(new String(message.getPayload()));
                 }
             });
 
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             System.err.println("Exception whilst subscribing");
             ex.printStackTrace();
         }
     }
 
-    public void publishMessage(){
 
+    public void publishMessage() {
         try {
             MqttMessage message = new MqttMessage();
             message.setPayload(publishMessage.getBytes());
             mqttAndroidClient.publish(publishTopic, message);
-            addToHistory("Message Published");
-            if(!mqttAndroidClient.isConnected()){
-                addToHistory(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer.");
+            addToHistory("Message Published" + publishMessage);
+            if (!mqttAndroidClient.isConnected()) {
+                addToHistory(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer");
             }
         } catch (MqttException e) {
             System.err.println("Error Publishing: " + e.getMessage());
